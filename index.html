@@ -124,10 +124,10 @@ select{padding-right:14px}
 .guideb{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin:0 0 14px;border:2px solid var(--ink);border-radius:14px;background:var(--bg);font-weight:700}
 .guideb svg{width:20px;height:20px}
 .cat .nm{background:none;border:0;padding:0;text-align:left;cursor:pointer}
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:10}
-.ov[hidden]{display:none}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.backdrop[hidden]{display:none}
 .sheet{background:var(--bg);color:var(--ink);width:min(680px,100%);max-height:88vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:0 20px 28px;overscroll-behavior:contain}
-@media(min-width:700px){.ov{align-items:center}.sheet{border-radius:20px;max-height:84vh}}
+@media(min-width:700px){.backdrop{align-items:center}.sheet{border-radius:20px;max-height:84vh}}
 .shd{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:16px 0 10px;border-bottom:1px solid var(--line)}
 .shd h2{margin:0}
 .gs{padding:14px 0;border-bottom:1px solid var(--line);scroll-margin-top:72px}
@@ -275,7 +275,7 @@ select{padding-right:14px}
     <div id="avg"></div>
   </section>
 </main>
-<div class="ov" id="gov" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="gt" id="gsh">
+<div class="backdrop" id="gov" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="gt" id="gsh">
   <div class="shd"><h2 id="gt">Serving guide</h2><button class="x" data-a="gclose" id="gx" aria-label="Close serving guide">×</button></div>
   <div id="gbody"></div>
 </div></div>
