@@ -180,7 +180,7 @@ select{padding-right:14px}
 </header>
 <main class="wrap">
   <section id="v-today">
-    <div class="note" id="samp" hidden><span>These targets come from example stats.</span><button class="lnk" data-go="plan">Enter your stats</button></div>
+    <div class="note" id="samp" hidden><span>These targets come from example stats.</span><span><button class="lnk" data-go="plan">Enter your stats</button> <button class="lnk" data-a="nosamp" style="color:var(--mut);margin-left:12px">Dismiss</button></span></div>
     <div class="sr" id="srT"></div>
     <button class="guideb" data-a="guide"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 9.2a2.6 2.6 0 015 .9c0 1.7-2.5 2.2-2.5 3.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.2" fill="currentColor"/></svg>What counts as a serving?</button>
     <div class="daynav"><button class="ib" id="prev" aria-label="Previous day">‹</button><b id="dl">Today</b><button class="ib" id="next" aria-label="Next day">›</button></div>
@@ -313,7 +313,7 @@ const DEF={profile:{sex:'m',age:35,ft:5,inch:10,lb:190,act:2,goal:'lose',lrate:1
 const clone=o=>JSON.parse(JSON.stringify(o));
 function fix(s){
   const d=clone(DEF);s=s&&typeof s==='object'?clone(s):{};
-  const o={lastBackup:s.lastBackup||null,pstart:s.pstart||null,profile:{...d.profile,...(s.profile||{})},adj:s.adj||{},cadj:+s.cadj||0,log:s.log||{},wt:{goal:null,entries:[],...(s.wt||{})},sample:s.sample!==false};
+  const o={upd:+s.upd||0,lastBackup:s.lastBackup||null,pstart:s.pstart||null,profile:{...d.profile,...(s.profile||{})},adj:s.adj||{},cadj:+s.cadj||0,log:s.log||{},wt:{goal:null,entries:[],...(s.wt||{})},sample:s.sample!==false};
   if(o.profile.style==='cycle'){o.profile.style='bal';o.profile.cycle=true}
   if(s.cheats)Object.values(s.cheats).forEach(a=>(a||[]).forEach(k=>{const e=o.log[k]||(o.log[k]={});e.cm=(e.cm||0)+1}));
   o.wt.entries=(o.wt.entries||[]).filter(e=>e&&e.d&&+e.lb).sort((a,b)=>a.d<b.d?-1:1);
@@ -385,8 +385,13 @@ function startKey(){if(S.pstart)return S.pstart;const ks=Object.keys(S.log).filt
 /* persistence: per-person doc in the artifact db, mirrored to this browser */
 let ref=null,saving=false,again=false,tmr,ready=false;
 const setSync=t=>$('#sync').textContent=t;
-function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}clearTimeout(tmr);tmr=setTimeout(push,700)}
+function save(){S.upd=Date.now();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}clearTimeout(tmr);tmr=setTimeout(push,700)}
+/* flush a pending save if the app is closed or backgrounded before the debounce fires */
+function flush(){if(tmr){clearTimeout(tmr);tmr=null;push()}}
+addEventListener('pagehide',flush);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
 async function push(){
+  tmr=null;
   if(!ref){if(ready)setSync('Saved on this device');return}
   if(saving){again=true;return}
   saving=true;setSync('Saving…');
@@ -401,7 +406,8 @@ async function init(){
     const id=u&&await u.id();if(!db||!id)throw 0;
     const r=db.doc('data/users/'+id+'/state');const snap=await r.get();
     clearTimeout(to);ref=r;ready=true;
-    if(snap.exists){S=fix(snap.data());try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}fillForm();renderAll();setSync('Synced')}
+    /* newest copy wins: a change saved on this device but never synced is not overwritten by an older synced copy */
+    if(snap.exists&&(+snap.data().upd||0)>=S.upd){S=fix(snap.data());try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}fillForm();renderAll();setSync('Synced')}
     else push();
   }catch(e){clearTimeout(to);ready=true;setSync('Saved on this device')}
 }
@@ -662,6 +668,7 @@ document.addEventListener('click',ev=>{
   if(a==='guide')return openGuide(b.dataset.k,b);
   if(a==='gclose')return closeGuide();
   if(a==='lift')return toggleLift();
+  if(a==='nosamp'){S.sample=false;save();return renderToday()}
   if(a==='backup')return backup();
   if(a==='newp'||a==='erase')return askPg(a);
   if(a==='pgyes')return doPg();
