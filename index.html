@@ -239,6 +239,10 @@ select{padding-right:14px}
         <div class="bk"><button class="btn" type="button" data-a="backup">Create local backup</button><button class="rst" type="button" data-a="pick">Restore from backup</button></div>
         <input type="file" id="rf" accept=".json,application/json" hidden>
         <div class="note" id="bkc" hidden><span id="bkct"></span><span class="bk"><button class="btn" type="button" data-a="restore">Restore</button><button class="rst" type="button" data-a="rcancel">Cancel</button></span></div>
+        <h2>Program</h2>
+        <p class="small" id="pgst"></p>
+        <div class="bk"><button class="btn" type="button" data-a="newp">Start new program</button><button class="rst" type="button" data-a="erase">Erase all data</button></div>
+        <div class="note" id="pgc" hidden><span id="pgct"></span><span class="bk"><button class="btn" type="button" data-a="pgyes" id="pgyes">Confirm</button><button class="rst" type="button" data-a="backup">Back up first</button><button class="rst" type="button" data-a="pgno">Cancel</button></span></div>
       </div>
     </div>
   </section>
@@ -309,7 +313,7 @@ const DEF={profile:{sex:'m',age:35,ft:5,inch:10,lb:190,act:2,goal:'lose',lrate:1
 const clone=o=>JSON.parse(JSON.stringify(o));
 function fix(s){
   const d=clone(DEF);s=s&&typeof s==='object'?clone(s):{};
-  const o={lastBackup:s.lastBackup||null,profile:{...d.profile,...(s.profile||{})},adj:s.adj||{},cadj:+s.cadj||0,log:s.log||{},wt:{goal:null,entries:[],...(s.wt||{})},sample:s.sample!==false};
+  const o={lastBackup:s.lastBackup||null,pstart:s.pstart||null,profile:{...d.profile,...(s.profile||{})},adj:s.adj||{},cadj:+s.cadj||0,log:s.log||{},wt:{goal:null,entries:[],...(s.wt||{})},sample:s.sample!==false};
   if(o.profile.style==='cycle'){o.profile.style='bal';o.profile.cycle=true}
   if(s.cheats)Object.values(s.cheats).forEach(a=>(a||[]).forEach(k=>{const e=o.log[k]||(o.log[k]={});e.cm=(e.cm||0)+1}));
   o.wt.entries=(o.wt.entries||[]).filter(e=>e&&e.d&&+e.lb).sort((a,b)=>a.d<b.d?-1:1);
@@ -359,10 +363,12 @@ function T(k){
 const allowed=()=>Math.max(0,calc(S.profile).ch+S.cadj);
 const isToday=k=>k===K(today());
 const tFor=k=>{const t=T(k),e=S.log[k];if(!isToday(k)&&e&&e.t){Object.assign(t,e.t);if(!('w' in e.t))t.w=0}return t};
-function wkCount(d){const m=mon(d);let n=0;for(let i=0;i<7;i++)n+=g(S.log[K(add(m,i))],'cm');return n}
+const inP=k=>!S.pstart||k>=S.pstart;
+const WE=()=>S.wt.entries.filter(e=>inP(e.d));
+function wkCount(d){const m=mon(d);let n=0;for(let i=0;i<7;i++){const k=K(add(m,i));if(inP(k))n+=g(S.log[k],'cm')}return n}
 function excused(k){
   if(!g(S.log[k],'cm'))return false;
-  let n=0;for(let d=mon(D(k));K(d)<=k;d=add(d,1))n+=g(S.log[K(d)],'cm');
+  let n=0;for(let d=mon(D(k));K(d)<=k;d=add(d,1))if(inP(K(d)))n+=g(S.log[K(d)],'cm');
   return n<=allowed();
 }
 const logged=e=>e&&(CATS.some(c=>g(e,c.k)>0)||g(e,'cm')>0);
@@ -372,9 +378,9 @@ function level(k){
   const ok=CATS.every(c=>c.lim?(ex||g(e,c.k)<=t[c.k]):g(e,c.k)>=t[c.k]);
   return ok?2:1;
 }
-function streak(){let d=today(),n=0;if(level(K(d))<2)d=add(d,-1);while(level(K(d))===2){n++;d=add(d,-1)}return n}
-function best(){let b=0,r=0,prev=null;Object.keys(S.log).filter(k=>level(k)===2).sort().forEach(k=>{r=prev&&K(add(D(prev),1))===k?r+1:1;if(r>b)b=r;prev=k});return b}
-function startKey(){const ks=Object.keys(S.log).filter(k=>logged(S.log[k])).sort();return ks[0]||null}
+function streak(){let d=today(),n=0;if(level(K(d))<2)d=add(d,-1);while(inP(K(d))&&level(K(d))===2){n++;d=add(d,-1)}return n}
+function best(){let b=0,r=0,prev=null;Object.keys(S.log).filter(k=>inP(k)&&level(k)===2).sort().forEach(k=>{r=prev&&K(add(D(prev),1))===k?r+1:1;if(r>b)b=r;prev=k});return b}
+function startKey(){if(S.pstart)return S.pstart;const ks=Object.keys(S.log).filter(k=>logged(S.log[k])).sort();return ks[0]||null}
 
 /* persistence: per-person doc in the artifact db, mirrored to this browser */
 let ref=null,saving=false,again=false,tmr,ready=false;
@@ -466,7 +472,7 @@ function readForm(){
 }
 /* projection toward the goal weight at plan pace, from the latest weight */
 function proj(){
-  const r=calc(S.profile),E=S.wt.entries,goal=+S.wt.goal,curW=E.length?E[E.length-1].lb:S.profile.lb,from=E.length?D(E[E.length-1].d):today();
+  const r=calc(S.profile),E=WE(),goal=+S.wt.goal,curW=E.length?E[E.length-1].lb:S.profile.lb,from=E.length?D(E[E.length-1].d):today();
   if(!goal)return{curW,why:'Set a goal weight'};
   if(Math.abs(curW-goal)<.25)return{curW,done:true};
   const dir=goal<curW?'lose':'gain';
@@ -499,7 +505,7 @@ function renderPlan(){
   $('#rst').hidden=!(S.cadj||Object.values(S.adj).some(v=>+v));
 }
 function pace(){
-  const E=S.wt.entries;if(E.length<2)return null;
+  const E=WE();if(E.length<2)return null;
   const last=D(E[E.length-1].d),pts=E.filter(e=>(last-D(e.d))/864e5<=42).map(e=>[(D(e.d)-last)/864e5,+e.lb]);
   if(pts.length<2||-pts[0][0]<7)return null;
   const n=pts.length,mx=pts.reduce((a,p)=>a+p[0],0)/n,my=pts.reduce((a,p)=>a+p[1],0)/n;
@@ -507,7 +513,7 @@ function pace(){
   return sl*7;
 }
 function renderWt(){
-  const E=S.wt.entries,goal=+S.wt.goal,pj=proj(),st=E[0],curW=pj.curW;
+  const E=WE(),goal=+S.wt.goal,pj=proj(),st=E[0],curW=pj.curW;
   $('#wempty').hidden=!!(E.length&&goal);
   $('#wfig').hidden=!E.length;$('#wax').hidden=!E.length;
   const togo=goal?Math.abs(curW-goal):null,chg=st?curW-st.lb:0;
@@ -530,7 +536,7 @@ function renderWt(){
   drawW();
 }
 function drawW(){
-  const s=$('#wsvg'),W=s.clientWidth,H=s.clientHeight,E=S.wt.entries;
+  const s=$('#wsvg'),W=s.clientWidth,H=s.clientHeight,E=WE();
   if(!W||!E.length){s.innerHTML='';return}
   const goal=+S.wt.goal,pj=proj(),last=E[E.length-1];
   const x0=D(E[0].d).getTime(),x1=Math.max(D(last.d).getTime()+7*864e5,pj.end?pj.end.getTime():0,x0+14*864e5);
@@ -554,7 +560,7 @@ function renderCal(){
   const lead=(new Date(y,mo,1).getDay()+6)%7,days=new Date(y,mo+1,0).getDate();let ok=0,no=0;
   for(let i=0;i<lead;i++)h+='<div></div>';
   for(let d=1;d<=days;d++){
-    const k=K(new Date(y,mo,d)),fu=k>t0,lv=fu?0:level(k);let cls='',mk='',lab='';
+    const k=K(new Date(y,mo,d)),fu=k>t0,lv=fu||!inP(k)?0:level(k);let cls='',mk='',lab='';
     if(lv===2){cls='ok';mk=CHK;lab='completed';ok++}
     else if(!fu&&k<t0&&sk&&k>=sk){cls='no';mk=XX;lab='not completed';no++}
     h+=`<button class="d ${cls}${k===t0?' td':''}" data-a="go" data-k="${k}" ${fu?'disabled':''} aria-label="${fmt(D(k))} ${lab}"><span>${d}</span>${mk}</button>`;
@@ -562,7 +568,7 @@ function renderCal(){
   $('#cg').innerHTML=h;
   $('#srC').innerHTML=srate();
   $('#csum').innerHTML=`<b>${ok}</b> completed · <b>${no}</b> not completed`+(ok+no?` · ${Math.round(ok/(ok+no)*100)}%`:'');
-  const last30=Array.from({length:30},(_,i)=>level(K(add(today(),-i))));
+  const last30=Array.from({length:30},(_,i)=>K(add(today(),-i))).map(k=>inP(k)?level(k):0);
   $('#hs').innerHTML=`<div><b>${streak()}</b><span>Current streak</span></div><div><b>${best()}</b><span>Best streak</span></div><div><b>${last30.filter(x=>x===2).length}</b><span>Days hit, last 30</span></div>`;
   const ds=Array.from({length:7},(_,i)=>K(add(today(),-i))).filter(k=>logged(S.log[k]));
   $('#avg').innerHTML=ds.length?CATS.map(c=>{let a=0,tg=0;ds.forEach(k=>{a+=g(S.log[k],c.k);tg+=tFor(k)[c.k]});const av=a/ds.length,tt=tg/ds.length,pc=tt?Math.min(100,av/tt*100):av?100:0;
@@ -618,11 +624,26 @@ function openGuide(k,from){
 function closeGuide(){$('#gov').hidden=true;document.body.style.overflow='';if(gRet)gRet.focus()}
 $('#gov').addEventListener('click',e=>{if(e.target.id==='gov')closeGuide()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#gov').hidden)closeGuide()});
-function renderAll(){renderBand();renderToday();renderPlan();renderWt();renderCal();renderBk()}
+let pgAct=null,pgMsg='';
+function renderPg(){
+  const sk=startKey();
+  $('#pgst').textContent=(pgMsg?pgMsg+' · ':'')+(S.pstart?`Current program started ${fmtY(D(S.pstart))}. Earlier logs and weigh-ins are kept but don’t count.`:sk?`Program running since ${fmtY(D(sk))}.`:'No days logged yet.');
+}
+function askPg(act){
+  pgAct=act;$('#pgc').hidden=false;
+  $('#pgct').textContent=act==='newp'?'Start a new program today? Streaks, success rate, calendar marks, cheat meals and weight progress start fresh from today. Your plan settings and goal weight stay; old logs are kept but no longer counted.':'Erase everything? This deletes all logs, weigh-ins, settings and streaks on this device'+(ref?' and in your synced data':'')+'. It can’t be undone unless you have a backup.';
+  $('#pgyes').textContent=act==='newp'?'Start new program':'Erase everything';
+}
+function doPg(){
+  if(pgAct==='newp'){S.pstart=K(today());S.sample=false;pgMsg='New program started — log a starting weigh-in on the Weight tab'}
+  else if(pgAct==='erase'){S=fix(null);pgMsg='All data erased';cur=today()}
+  pgAct=null;$('#pgc').hidden=true;save();fillForm();renderAll();
+}
+function renderAll(){renderPg();renderBand();renderToday();renderPlan();renderWt();renderCal();renderBk()}
 function tab(t){
   document.querySelectorAll('[data-t]').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
   ['today','plan','wt','cal'].forEach(x=>$('#v-'+x).hidden=x!==t);
-  ({today:renderToday,plan:renderPlan,wt:renderWt,cal:renderCal})[t]();
+  ({today:renderToday,plan:()=>{renderPlan();renderPg();renderBk()},wt:renderWt,cal:renderCal})[t]();
 }
 
 $('#act').innerHTML=ACT.map((a,i)=>`<option value="${i}">${a[1]}</option>`).join('');
@@ -642,6 +663,9 @@ document.addEventListener('click',ev=>{
   if(a==='gclose')return closeGuide();
   if(a==='lift')return toggleLift();
   if(a==='backup')return backup();
+  if(a==='newp'||a==='erase')return askPg(a);
+  if(a==='pgyes')return doPg();
+  if(a==='pgno'){pgAct=null;$('#pgc').hidden=true;return}
   if(a==='pick')return $('#rf').click();
   if(a==='rcancel'){pend=null;$('#bkc').hidden=true;return}
   if(a==='restore'){if(pend){S=pend;S.sample=false;pend=null;$('#bkc').hidden=true;bkMsg='Backup restored';save();fillForm();renderAll()}return}
