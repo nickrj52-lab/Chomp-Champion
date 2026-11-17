@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#c8102e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chomp Champ">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Chomp Champion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,7 +29,7 @@ button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .wrap{max-width:980px;margin:0 auto}
-.top{background:var(--red);color:#fff;padding:14px max(5vw,16px) 0}
+.top{background:var(--red);color:#fff;padding:max(14px,env(safe-area-inset-top)) max(5vw,16px,env(safe-area-inset-right)) 0 max(5vw,16px,env(safe-area-inset-left))}
 .r1{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .brand{font:22px/1 Anton,Impact,sans-serif;letter-spacing:.02em}
 .sync{font-size:13px;opacity:.85}
@@ -31,7 +39,7 @@ button{cursor:pointer}
 .tabs{display:flex;gap:2px}
 .tabs button{background:none;border:0;color:#fff;padding:12px clamp(10px,3vw,18px);min-height:44px;border-radius:10px 10px 0 0;font-weight:700;opacity:.8}
 .tabs button[aria-selected=true]{background:var(--bg);color:var(--ink);opacity:1}
-main{padding:20px max(5vw,16px) 48px}
+main{padding:20px max(5vw,16px) max(48px,calc(env(safe-area-inset-bottom) + 24px))}
 [hidden]{display:none!important}
 h2{font:26px/1.1 Anton,Impact,sans-serif;margin:28px 0 12px;font-weight:400}
 .note{background:var(--card);border-radius:12px;padding:12px 14px;font-size:15px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
@@ -140,6 +148,17 @@ select{padding-right:14px}
 .eye b{display:block;font-size:15px}.eye span{font-size:13px;color:var(--mut);line-height:1.35;display:block}
 .gs .lk{font-size:14px;margin:0 0 6px}.gs .lk b{font-weight:700}
 .gs .nt{font-size:13px;color:var(--mut);margin:6px 0 0}
+.winbg{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(0,0,0,.55);padding:20px}
+.wincard{position:relative;overflow:hidden;width:min(420px,100%);background:var(--red);color:#fff;border-radius:24px;padding:36px 24px 24px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35);animation:winpop .45s cubic-bezier(.2,1.4,.4,1)}
+.wincard h2{font:clamp(44px,13vw,64px)/.95 Anton,Impact,sans-serif;margin:0;font-weight:400}
+.wincard h3{font:clamp(28px,8vw,38px)/1 Anton,Impact,sans-serif;margin:6px 0 14px;font-weight:400;color:#ffe08a}
+.wincard p{margin:0 0 20px;font-size:17px}
+.wincard button{height:50px;min-width:160px;border:0;border-radius:14px;background:#fff;color:var(--red);font-weight:700;font-size:17px}
+.winpl{display:flex;justify-content:center;gap:8px;margin-bottom:18px}
+.winpl i{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,var(--red) 0 4px,transparent 4.5px),var(--c);box-shadow:inset 0 -3px 0 rgba(0,0,0,.2);animation:windrop .5s both}
+@keyframes winpop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes windrop{from{transform:translateY(-30px);opacity:0}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.wincard,.winpl i{animation:none}}
 .x{width:44px;height:44px;border:0;background:none;color:var(--mut);font-size:22px}
 .mh{display:flex;align-items:center;gap:8px;max-width:560px}
 .mh b{flex:1;text-align:center;font:24px/1 Anton,Impact,sans-serif;font-weight:400}
@@ -279,6 +298,12 @@ select{padding-right:14px}
     <div id="avg"></div>
   </section>
 </main>
+<div class="winbg" id="win" hidden><div class="wincard" role="alertdialog" aria-modal="true" aria-labelledby="wint">
+  <div class="winpl" id="winpl"></div>
+  <h2 id="wint">GOALS ACHIEVED!</h2><h3>GREAT JOB!</h3>
+  <p id="wins"></p>
+  <button data-a="winclose" id="winb">Let’s go</button>
+</div></div>
 <div class="backdrop" id="gov" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="gt" id="gsh">
   <div class="shd"><h2 id="gt">Serving guide</h2><button class="x" data-a="gclose" id="gx" aria-label="Close serving guide">×</button></div>
   <div id="gbody"></div>
@@ -412,19 +437,31 @@ async function init(){
   }catch(e){clearTimeout(to);ready=true;setSync('Saved on this device')}
 }
 
+/* celebrate only when a tap takes the day from not-done to done */
+function celebrate(k){
+  $('#winpl').innerHTML=['--cp','--cc','--cf','--cv','--cr','--cw'].map((c,i)=>`<i style="--c:var(${c});animation-delay:${.15+i*.07}s"></i>`).join('');
+  const n=streak();
+  $('#wins').textContent=isToday(k)?(n>1?`${n}-day streak and counting.`:'Day complete. Streak started.'):`${fmtY(D(k))} is now a completed day.`;
+  $('#win').hidden=false;$('#winb').focus();
+}
+function closeWin(){$('#win').hidden=true}
+$('#win').addEventListener('click',e=>{if(e.target.id==='win')closeWin()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#win').hidden)closeWin()});
 function setCount(ck,n){
-  const k=K(cur),e=S.log[k]||(S.log[k]={});
+  const k=K(cur),was=level(k),e=S.log[k]||(S.log[k]={});
   e[ck]=Math.max(0,Math.min(ck==='cm'?7:30,n));
   if(isToday(k)||!e.t)e.t=T(k);
   if(!logged(e)&&!e.lift)delete S.log[k];
   save();renderToday();renderBand();
+  if(was<2&&level(k)===2)celebrate(k);
 }
 
 function toggleLift(){
-  const k=K(cur),e=S.log[k]||(S.log[k]={});e.lift=!e.lift;
+  const k=K(cur),was=level(k),e=S.log[k]||(S.log[k]={});e.lift=!e.lift;
   if(isToday(k)||!e.t)e.t=T(k);else e.t.c=T(k).c;
   if(!logged(e)&&!e.lift)delete S.log[k];
   save();renderToday();renderBand();
+  if(was<2&&level(k)===2)celebrate(k);
 }
 function renderBand(){$('#sn').textContent=streak();$('#sb').textContent='Best '+best()}
 function plates(n,tg,c,btn){
@@ -665,6 +702,7 @@ document.addEventListener('click',ev=>{
   if(b.id==='cnext'){calM=new Date(calM.getFullYear(),calM.getMonth()+1,1);return renderCal()}
   const a=b.dataset.a;if(!a)return;
   if(a==='set')return setCount(b.dataset.k,+b.dataset.n);
+  if(a==='winclose')return closeWin();
   if(a==='guide')return openGuide(b.dataset.k,b);
   if(a==='gclose')return closeGuide();
   if(a==='lift')return toggleLift();
@@ -702,6 +740,8 @@ $('#wf').addEventListener('submit',e=>{
 $('#gw').addEventListener('input',()=>{const v=parseFloat($('#gw').value);S.wt.goal=isNaN(v)||v<70||v>600?null:r1(v);save();renderWt();renderPlan()});
 $('#wd').max=K(today());
 
+/* offline support + installability when self-hosted over https; ignored inside Claude */
+try{if('serviceWorker' in navigator&&window.isSecureContext&&!/claude/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 init();
 }
 </script>
