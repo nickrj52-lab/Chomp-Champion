@@ -159,6 +159,17 @@ select{padding-right:14px}
 @keyframes winpop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
 @keyframes windrop{from{transform:translateY(-30px);opacity:0}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){.wincard,.winpl i{animation:none}}
+.scb{position:relative;height:12px;border-radius:6px;background:var(--card);margin:0 0 6px;overflow:visible}
+.scb i{display:block;height:100%;border-radius:6px;background:var(--red);transition:width .3s}
+.scb i.ok{background:var(--cv)}.scb i.pf{background:#d9a300}
+.scb b{position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;background:var(--ink)}
+.cdb{width:100%;margin:0 0 18px}
+.cal .d.pf{background:color-mix(in srgb,#d9a300 20%,var(--card));color:var(--ink)}
+.cdcard{width:min(400px,100%);background:var(--bg);color:var(--ink);border-radius:22px;padding:26px 22px 22px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.cdcard h2{margin:0 0 6px}.cdcard p{margin:0 0 18px;color:var(--mut)}
+.cdcard .bk{justify-content:center}
+.dfnote{margin:6px 0 0}
+@media(prefers-reduced-motion:reduce){.scb i{transition:none}}
 .x{width:44px;height:44px;border:0;background:none;color:var(--mut);font-size:22px}
 .mh{display:flex;align-items:center;gap:8px;max-width:560px}
 .mh b{flex:1;text-align:center;font:24px/1 Anton,Impact,sans-serif;font-weight:400}
@@ -202,8 +213,11 @@ select{padding-right:14px}
     <div class="note" id="samp" hidden><span>These targets come from example stats.</span><span><button class="lnk" data-go="plan">Enter your stats</button> <button class="lnk" data-a="nosamp" style="color:var(--mut);margin-left:12px">Dismiss</button></span></div>
     <div class="sr" id="srT"></div>
     <button class="guideb" data-a="guide"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 9.2a2.6 2.6 0 015 .9c0 1.7-2.5 2.2-2.5 3.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.2" fill="currentColor"/></svg>What counts as a serving?</button>
+    <div class="note" id="sug" hidden><span id="sugt"></span><span class="bk"><button class="btn" type="button" data-a="sugyes" id="sugy">Switch</button><button class="rst" type="button" data-a="sugno">Not now</button></span></div>
     <div class="daynav"><button class="ib" id="prev" aria-label="Previous day">‹</button><b id="dl">Today</b><button class="ib" id="next" aria-label="Next day">›</button></div>
+    <div class="scb" id="scb" aria-hidden="true"><i id="scf" style="width:0"></i><b id="scl"></b></div>
     <p class="dstat" id="ds"></p>
+    <button class="btn cdb" type="button" data-a="complete" id="cdb" hidden>Complete day</button>
     <button class="lift" id="liftT" data-a="lift" aria-pressed="false" hidden><span class="sw"></span><span><b>Lifting day</b><small id="liftS"></small></span></button>
     <div id="cats"></div>
     <h2>Drinks &amp; cheat meals</h2>
@@ -231,6 +245,11 @@ select{padding-right:14px}
         <div class="fld" id="ratef"><span id="ratel">Pounds to lose per week</span>
           <div class="stp"><button type="button" class="st" data-a="rate" data-d="-1" aria-label="Slower">−</button><b id="ratev">1</b><span class="small" id="ratec"></span><button type="button" class="st" data-a="rate" data-d="1" aria-label="Faster">+</button></div>
           <p class="warnt" id="ratew" hidden></p></div>
+        <div class="fld"><span>Adherence difficulty</span><div class="seg">
+          <label><input type="radio" name="diff" value="80"><span>Moderate<small style="display:block;font-size:13px;opacity:.8">80%</small></span></label>
+          <label><input type="radio" name="diff" value="90"><span>Hard<small style="display:block;font-size:13px;opacity:.8">90%</small></span></label>
+          <label><input type="radio" name="diff" value="100"><span>Extreme<small style="display:block;font-size:13px;opacity:.8">100%</small></span></label></div>
+          <p class="small dfnote">The day score a day needs to pass. Changes apply from today on; past days keep the level they were scored at.</p></div>
         <div class="fld"><span>Diet style</span><div class="seg">
           <label><input type="radio" name="style" value="bal"><span>Balanced</span></label>
           <label><input type="radio" name="style" value="low"><span>Low carb</span></label></div></div>
@@ -300,9 +319,14 @@ select{padding-right:14px}
 </main>
 <div class="winbg" id="win" hidden><div class="wincard" role="alertdialog" aria-modal="true" aria-labelledby="wint">
   <div class="winpl" id="winpl"></div>
-  <h2 id="wint">GOALS ACHIEVED!</h2><h3>GREAT JOB!</h3>
+  <h2 id="wint">GOALS ACHIEVED!</h2><h3 id="win2">GREAT JOB!</h3>
   <p id="wins"></p>
   <button data-a="winclose" id="winb">Let’s go</button>
+</div></div>
+<div class="winbg" id="cdlg" hidden><div class="cdcard" role="alertdialog" aria-modal="true" aria-labelledby="cdt">
+  <h2 id="cdt">All boxes filled!</h2>
+  <p>That’s a perfect day. Complete it now, or keep logging and complete it later.</p>
+  <div class="bk"><button class="btn" type="button" data-a="complete" id="cdy">Complete day</button><button class="rst" type="button" data-a="cdno">Not yet</button></div>
 </div></div>
 <div class="backdrop" id="gov" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="gt" id="gsh">
   <div class="shd"><h2 id="gt">Serving guide</h2><button class="x" data-a="gclose" id="gx" aria-label="Close serving guide">×</button></div>
@@ -328,17 +352,18 @@ const GUIDE=[
  {k:'fr',eye:'Fist or tennis ball',eyeS:'One piece about the size of a tennis ball',lk:'A tennis ball for whole fruit; a fist of berries or cut fruit',hand:'One piece or one fist · about 80 kcal',ex:['1 medium apple, orange, pear or peach','1 small banana','1 cup berries, melon or pineapple','¾ cup grapes','2 tbsp dried fruit']},
  {k:'w',lk:'A standard drinking glass is about 8 oz',hand:'One tap = 8 oz (1 cup)',ex:['Standard bottle (16.9 oz) ≈ 2 taps','Large tumbler (32 oz) = 4 taps','Unsweetened tea, black coffee and zero-calorie drinks count here']},
  {k:'d',lk:'A standard can is 12 oz; a wine pour fills about a third of the glass; a shot glass is 1.5 oz',hand:'One drink · about 150 kcal',ex:['12 oz soda or energy drink','8 oz juice','1 beer (12 oz)','5 oz wine','1.5 oz liquor (sugary mixers count as another drink)','Small sweetened coffee drink or smoothie'],nt:'Zero-calorie drinks are water, not this.'},
- {k:'cm',hand:'One meal off the plan',ex:['Eat what you want for that one meal','Tap + under Cheat meals; no need to log its servings','Within your weekly allowance it covers going over on carbs, fats or drinks that day']}];
+ {k:'cm',hand:'One meal off the plan',ex:['Eat what you want for that one meal','Tap + under Cheat meals; no need to log its servings','It doesn’t change your serving count either way','Within your weekly allowance it’s free; an extra one past the allowance fails the day it’s logged']}];
 const ACT=[[1.2,'Sedentary — desk job, little exercise'],[1.375,'Light — training 1–3 days a week'],[1.55,'Moderate — training 3–5 days a week'],[1.725,'Very active — hard training 6–7 days'],[1.9,'Athlete — physical job plus training']];
 const GOALS={lose:{pf:1,v:5,fr:2,cs:.5,ch:1,dr:0},maintain:{pf:.8,v:4,fr:2,cs:.55,ch:2,dr:1},gain:{pf:1,v:4,fr:3,cs:.6,ch:2,dr:1}};
 const KC={p:140,c:110,f:100,v:25,fr:80,w:0,d:150};
 const CHK='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--cv)"/><path d="M7 12.5l3.2 3L17 8.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#d9a300"/><path d="M12 5.2l2 4.3 4.6.5-3.4 3.1 1 4.6L12 15.4 7.8 17.7l1-4.6L5.4 10l4.6-.5z" fill="#fff"/></svg>';
 const XX='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="var(--red)" stroke-width="2.8" stroke-linecap="round"/></svg>';
-const DEF={profile:{sex:'m',age:35,ft:5,inch:10,lb:190,act:2,goal:'lose',lrate:1,grate:.5,style:'bal',cycle:false,liftDays:4},adj:{},cadj:0,log:{},wt:{goal:null,entries:[]},sample:true};
+const DEF={profile:{sex:'m',age:35,ft:5,inch:10,lb:190,act:2,goal:'lose',lrate:1,grate:.5,style:'bal',cycle:false,liftDays:4,diff:80},adj:{},cadj:0,log:{},wt:{goal:null,entries:[]},sample:true};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function fix(s){
   const d=clone(DEF);s=s&&typeof s==='object'?clone(s):{};
-  const o={upd:+s.upd||0,lastBackup:s.lastBackup||null,pstart:s.pstart||null,profile:{...d.profile,...(s.profile||{})},adj:s.adj||{},cadj:+s.cadj||0,log:s.log||{},wt:{goal:null,entries:[],...(s.wt||{})},sample:s.sample!==false};
+  const o={sugDis:s.sugDis||null,upd:+s.upd||0,lastBackup:s.lastBackup||null,pstart:s.pstart||null,profile:{...d.profile,...(s.profile||{})},adj:s.adj||{},cadj:+s.cadj||0,log:s.log||{},wt:{goal:null,entries:[],...(s.wt||{})},sample:s.sample!==false};
   if(o.profile.style==='cycle'){o.profile.style='bal';o.profile.cycle=true}
   if(s.cheats)Object.values(s.cheats).forEach(a=>(a||[]).forEach(k=>{const e=o.log[k]||(o.log[k]={});e.cm=(e.cm||0)+1}));
   o.wt.entries=(o.wt.entries||[]).filter(e=>e&&e.d&&+e.lb).sort((a,b)=>a.d<b.d?-1:1);
@@ -391,20 +416,40 @@ const tFor=k=>{const t=T(k),e=S.log[k];if(!isToday(k)&&e&&e.t){Object.assign(t,e
 const inP=k=>!S.pstart||k>=S.pstart;
 const WE=()=>S.wt.entries.filter(e=>inP(e.d));
 function wkCount(d){const m=mon(d);let n=0;for(let i=0;i<7;i++){const k=K(add(m,i));if(inP(k))n+=g(S.log[k],'cm')}return n}
-function excused(k){
+/* cheat meals sit outside serving compliance; a day where the week's count goes past the allowance fails outright */
+function cheatOver(k){
   if(!g(S.log[k],'cm'))return false;
   let n=0;for(let d=mon(D(k));K(d)<=k;d=add(d,1))if(inP(K(d)))n+=g(S.log[K(d)],'cm');
-  return n<=allowed();
+  return n>allowed();
 }
 const logged=e=>e&&(CATS.some(c=>g(e,c.k)>0)||g(e,'cm')>0);
-function level(k){
-  const e=S.log[k];if(!logged(e))return 0;
-  const t=tFor(k),ex=excused(k);
-  const ok=CATS.every(c=>c.lim?(ex||g(e,c.k)<=t[c.k]):g(e,c.k)>=t[c.k]);
-  return ok?2:1;
+/* compliance = 1 − servings off ÷ total target servings (water counts as one serving).
+   Off: protein & fruit under or over · veggies under only · carbs, fats, drinks over only · water share missed (extra is free).
+   Cheat meals don't change the serving math; an extra one past the weekly allowance fails its day. Floors at 0. */
+const OVERS=['p','fr','c','f','d'];
+const isOver=(c,v,tg)=>OVERS.includes(c.k)&&v>tg;
+const DIFFS={80:'Moderate',90:'Hard',100:'Extreme'};
+const curDiff=()=>DIFFS[+S.profile.diff]?+S.profile.diff:80;
+const lineFor=k=>isToday(k)?curDiff():(S.log[k]&&+S.log[k].diff)||100;
+function score(k){
+  const e=S.log[k];if(!logged(e))return null;
+  const t=tFor(k);let tot=0,off=0;
+  CATS.forEach(c=>{const v=g(e,c.k),tg=t[c.k];
+    if(c.k==='w'){if(tg>0){tot+=1;off+=Math.max(0,1-v/tg)}return}
+    tot+=tg;
+    if(!c.lim)off+=Math.max(0,tg-v);
+    if(isOver(c,v,tg))off+=v-tg});
+  return tot?Math.max(0,1-off/tot):1;
 }
-function streak(){let d=today(),n=0;if(level(K(d))<2)d=add(d,-1);while(inP(K(d))&&level(K(d))===2){n++;d=add(d,-1)}return n}
-function best(){let b=0,r=0,prev=null;Object.keys(S.log).filter(k=>inP(k)&&level(k)===2).sort().forEach(k=>{r=prev&&K(add(D(prev),1))===k?r+1:1;if(r>b)b=r;prev=k});return b}
+const pctOf=sc=>Math.floor(sc*100+1e-9);
+/* 0 nothing logged · 1 fail · 2 pass · 3 perfect */
+function level(k){const sc=score(k);if(sc===null)return 0;if(cheatOver(k))return 1;if(sc>=1)return 3;return pctOf(sc)>=lineFor(k)?2:1}
+/* past days count once they pass (auto-complete); today counts once it passes and is completed */
+function counted(k){const t0=K(today());if(k>t0)return false;const lv=level(k);return k<t0?lv>=2:lv>=2&&!!(S.log[k]&&S.log[k].done)}
+function streak(){let d=today(),n=0;if(!counted(K(d)))d=add(d,-1);while(inP(K(d))&&counted(K(d))){n++;d=add(d,-1)}return n}
+function failRun(){const sk=startKey();if(!sk)return{n:0};let d=add(today(),-1),n=0,st=null;while(K(d)>=sk&&inP(K(d))&&!counted(K(d))){n++;st=K(d);d=add(d,-1)}return{n,st}}
+function stampToday(){const e=S.log[K(today())];if(e)e.diff=curDiff()}
+function best(){let b=0,r=0,prev=null;Object.keys(S.log).filter(k=>inP(k)&&counted(k)).sort().forEach(k=>{r=prev&&K(add(D(prev),1))===k?r+1:1;if(r>b)b=r;prev=k});return b}
 function startKey(){if(S.pstart)return S.pstart;const ks=Object.keys(S.log).filter(k=>logged(S.log[k])).sort();return ks[0]||null}
 
 /* persistence: per-person doc in the artifact db, mirrored to this browser */
@@ -440,28 +485,42 @@ async function init(){
 /* celebrate only when a tap takes the day from not-done to done */
 function celebrate(k){
   $('#winpl').innerHTML=['--cp','--cc','--cf','--cv','--cr','--cw'].map((c,i)=>`<i style="--c:var(${c});animation-delay:${.15+i*.07}s"></i>`).join('');
-  const n=streak();
-  $('#wins').textContent=isToday(k)?(n>1?`${n}-day streak and counting.`:'Day complete. Streak started.'):`${fmtY(D(k))} is now a completed day.`;
+  const n=streak(),pf=level(k)===3,pc=pctOf(score(k)),dl=DIFFS[lineFor(k)]||'Extreme';
+  $('#wint').textContent=pf?'GOALS ACHIEVED!':'DAY PASSED!';$('#win2').textContent=pf?'GREAT JOB!':'NICE WORK!';
+  const sl=pf?'Perfect day.':`${pc}% on ${dl}.`;
+  $('#wins').textContent=isToday(k)?`${sl} ${n>1?n+'-day streak and counting.':'Streak started.'}`:`${fmtY(D(k))} ${pf?'was a perfect day':'passed at '+pc+'%'}.`;
   $('#win').hidden=false;$('#winb').focus();
 }
 function closeWin(){$('#win').hidden=true}
+function askComplete(){$('#cdlg').hidden=false;$('#cdy').focus()}
+function closeCd(){$('#cdlg').hidden=true}
+function completeDay(){const k=K(cur),e=S.log[k];closeCd();if(!e||level(k)<2)return;e.done=true;e.diff=curDiff();save();renderToday();renderBand();celebrate(k)}
+$('#cdlg').addEventListener('click',e=>{if(e.target.id==='cdlg')closeCd()});
 $('#win').addEventListener('click',e=>{if(e.target.id==='win')closeWin()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#win').hidden)closeWin()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#win').hidden)closeWin();if(!$('#cdlg').hidden)closeCd()}});
+/* after a change: today asks to complete when every box is filled; a past day that newly passes is auto-completed */
+function afterChange(k,was){
+  const e=S.log[k],lv=level(k);
+  if(isToday(k)){
+    if(e&&e.done&&lv<2)e.done=false;
+    if(e&&lv===3&&was<3){if(e.done)celebrate(k);else askComplete()}
+  }else if(was<2&&lv>=2)celebrate(k);
+}
 function setCount(ck,n){
   const k=K(cur),was=level(k),e=S.log[k]||(S.log[k]={});
   e[ck]=Math.max(0,Math.min(ck==='cm'?7:30,n));
   if(isToday(k)||!e.t)e.t=T(k);
+  if(isToday(k)||!('diff' in e))e.diff=curDiff();
   if(!logged(e)&&!e.lift)delete S.log[k];
-  save();renderToday();renderBand();
-  if(was<2&&level(k)===2)celebrate(k);
+  afterChange(k,was);save();renderToday();renderBand();
 }
 
 function toggleLift(){
   const k=K(cur),was=level(k),e=S.log[k]||(S.log[k]={});e.lift=!e.lift;
   if(isToday(k)||!e.t)e.t=T(k);else e.t.c=T(k).c;
+  if(isToday(k)||!('diff' in e))e.diff=curDiff();
   if(!logged(e)&&!e.lift)delete S.log[k];
-  save();renderToday();renderBand();
-  if(was<2&&level(k)===2)celebrate(k);
+  afterChange(k,was);save();renderToday();renderBand();
 }
 function renderBand(){$('#sn').textContent=streak();$('#sb').textContent='Best '+best()}
 function plates(n,tg,c,btn){
@@ -471,38 +530,46 @@ function plates(n,tg,c,btn){
   return h;
 }
 function renderToday(){
-  const k=K(cur),t=tFor(k),e=S.log[k]||{},ex=excused(k);
+  const k=K(cur),t=tFor(k),e=S.log[k]||{},co=cheatOver(k);
   $('#samp').hidden=!S.sample;
   $('#srT').innerHTML=srate();
+  {const fr=failRun(),cd=curDiff(),lower=cd===100?90:cd===90?80:null,show=fr.n>=3&&lower&&S.sugDis!==fr.st;
+   $('#sug').hidden=!show;if(show){$('#sugt').textContent=`${fr.n} missed days in a row. ${DIFFS[cd]} (${cd}%) might be too steep right now — try ${DIFFS[lower]} (${lower}%)?`;$('#sugy').textContent=`Switch to ${DIFFS[lower]}`;$('#sugy').dataset.to=lower;$('#sug').dataset.st=fr.st}}
   const lt=$('#liftT'),lifting=!!(S.log[k]&&S.log[k].lift),lc=Math.max(0,calc(S.profile).liftC+(+S.adj.c||0));
   lt.hidden=!cyc();lt.setAttribute('aria-pressed',lifting);
   $('#liftS').textContent=lifting?`Carbs on: ${lc} servings today`:`Rest day — no carbs. Turn on for ${lc} carb servings`;
   $('#dl').textContent=isToday(k)?'Today':k===K(add(today(),-1))?'Yesterday':cur.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
   $('#next').disabled=isToday(k);
   const row=c=>{
-    const n=g(e,c.k),tg=t[c.k],warn=c.lim&&n>tg&&!ex,oz=c.oz;
+    const n=g(e,c.k),tg=t[c.k],warn=isOver(c,n,tg),oz=c.oz;
     return `<div class="cat" style="--c:var(${c.c})"><div class="ch"><span class="dot"></span><button class="nm" data-a="guide" data-k="${c.k}" aria-label="What counts as a ${c.n} serving"><b>${c.n}${c.sub?`<small>${c.sub}</small>`:c.lim?'<small>limit</small>':oz?'<small>8 oz per tap</small>':''}</b></button><span class="cnt${warn?' warn':''}">${oz?n*oz:n}<small> / ${oz?tg*oz+' oz':tg}</small></span>
     <button class="st" data-a="set" data-k="${c.k}" data-n="${n-1}" ${n?'':'disabled'} aria-label="Remove ${oz?'8 oz of water':'a '+c.n+' serving'}">−</button><button class="st plus" data-a="set" data-k="${c.k}" data-n="${n+1}" aria-label="Add ${oz?'8 oz of water':'a '+c.n+' serving'}">+</button></div>
     <div class="plates">${plates(n,tg,c,1)||`<span class="none">${c.k==='c'&&cyc()?'Rest day — no carbs':c.lim?'Limit 0 — tap + to log any you have':'No target set'}</span>`}</div></div>`};
   $('#cats').innerHTML=CATS.filter(c=>!c.sec).map(row).join('');
   $('#xrows').innerHTML=CATS.filter(c=>c.sec).map(row).join('');
-  const lv=level(k),ds=$('#ds');
-  if(lv===2){ds.className='dstat ok';ds.textContent=ex?'All targets hit — cheat meal covered':'All targets hit'}
+  const lv=level(k),ds=$('#ds'),sc=score(k),ln=lineFor(k),pc=sc===null?0:pctOf(sc),done=!!(S.log[k]&&S.log[k].done),td=isToday(k);
+  $('#scf').style.width=pc+'%';$('#scf').className=lv===3?'pf':lv===2?'ok':'';$('#scl').style.left=`calc(${ln}% - 1.5px)`;$('#scl').hidden=ln>=100;
+  $('#cdb').hidden=!(td&&lv>=2&&!done);$('#cdb').textContent=lv===3?'Complete day — perfect':`Complete day — ${pc}%`;
+  const dn=DIFFS[ln]||'Extreme',head=lv===3?'Perfect day — 100%':`${pc}% · pass line ${ln}% (${dn})`;
+  if(lv===3&&(!td||done)){ds.className='dstat ok';ds.textContent=(td?'Day complete · ':'')+'Perfect day — 100%'}
+  else if(lv>=2&&td&&done){ds.className='dstat ok';ds.textContent=`Day complete · ${pc}% (${dn})`}
+  else if(lv>=2&&!td){ds.className='dstat ok';ds.textContent=`Passed · ${pc}% (${dn})`}
+  else if(lv===3){ds.className='dstat ok';ds.textContent=head}
   else{
     const left=CATS.filter(c=>!c.lim&&!c.oz).reduce((a,c)=>a+Math.max(0,t[c.k]-g(e,c.k)),0),wl=Math.max(0,t.w-g(e,'w'))*8;
-    const over=ex?[]:CATS.filter(c=>c.lim&&g(e,c.k)>t[c.k]).map(c=>c.n.toLowerCase()+' over by '+(g(e,c.k)-t[c.k]));
-    ds.className='dstat';ds.textContent=[left?left+(left>1?' servings':' serving')+' to go':'',wl?wl+' oz water to go':'',...over].filter(Boolean).join(' · ')||'Log your first serving';
+    const over=(co?['extra cheat meal — day fails']:[]).concat(CATS.filter(c=>isOver(c,g(e,c.k),t[c.k])).map(c=>c.n.toLowerCase()+' over by '+(g(e,c.k)-t[c.k])));
+    ds.className=lv===2?'dstat ok':'dstat';ds.textContent=sc===null?'Log your first serving':[head+(lv===2?' — passing':''),left?left+(left>1?' servings':' serving')+' to go':'',wl?wl+' oz water to go':'',...over].filter(Boolean).join(' · ');
   }
   const wk=mon(cur),N=allowed(),wc=wkCount(cur),dc=g(e,'cm');
   const used=[];for(let i=0;i<7;i++){const d=add(wk,i),x=g(S.log[K(d)],'cm');if(x)used.push(wd(d)+(x>1?' ×'+x:''))}
   $('#cmrow').innerHTML=`<div class="ch"><span class="dot"></span><button class="nm" data-a="guide" data-k="cm" aria-label="What counts as a cheat meal"><b>Cheat meals<small>Week of ${fmt(wk)}</small></b></button><span class="cnt${wc>N?' warn':''}">${wc}<small> / ${N}</small></span>
     <button class="st" data-a="set" data-k="cm" data-n="${dc-1}" ${dc?'':'disabled'} aria-label="Remove a cheat meal from this day">−</button><button class="st plus" data-a="set" data-k="cm" data-n="${dc+1}" aria-label="Add a cheat meal to this day">+</button></div>
     <div class="plates">${plates(wc,N,{},0)||'<span class="none">No cheat meals in your plan</span>'}</div>
-    <p class="sub">${used.length?'Logged: '+used.join(', '):'None used this week'}${wc>N?` · ${wc-N} over — extra cheat meals don’t cover carb, fat or drink overages`:''}</p>`;
+    <p class="sub">${used.length?'Logged: '+used.join(', '):'None used this week'}${wc>N?` · ${wc-N} over — the day an extra cheat meal is logged fails`:''}</p>`;
 }
 function fillForm(){
   const p=S.profile,f=$('#pf');
-  ['sex','goal','style'].forEach(n=>{const r=f.querySelector(`[name=${n}][value=${p[n]}]`);if(r)r.checked=true});
+  ['sex','goal','style','diff'].forEach(n=>{const r=f.querySelector(`[name=${n}][value="${n==='diff'?curDiff():p[n]}"]`);if(r)r.checked=true});
   ['age','ft','inch','lb'].forEach(x=>$('#'+x).value=p[x]);
   $('#act').value=p.act;
   $('#gw').value=S.wt.goal||'';
@@ -511,6 +578,7 @@ function fillForm(){
 function readForm(){
   const f=$('#pf'),p=S.profile,cl=(v,a,b,d)=>{v=parseFloat(v);return isNaN(v)?d:Math.min(b,Math.max(a,v))};
   ['sex','goal','style'].forEach(n=>p[n]=f.querySelector(`[name=${n}]:checked`).value);
+  p.diff=+f.querySelector('[name=diff]:checked').value||80;
   p.age=cl($('#age').value,14,90,p.age);p.ft=cl($('#ft').value,4,7,p.ft);p.inch=cl($('#inch').value,0,11,p.inch);p.lb=cl($('#lb').value,70,600,p.lb);p.act=+$('#act').value;
 }
 /* projection toward the goal weight at plan pace, from the latest weight */
@@ -600,19 +668,20 @@ function renderCal(){
   $('#cmo').textContent=calM.toLocaleDateString(undefined,{month:'long',year:'numeric'});
   $('#cnext').disabled=y>today().getFullYear()||(y===today().getFullYear()&&mo>=today().getMonth());
   let h=['M','T','W','T','F','S','S'].map(x=>`<div class="hd">${x}</div>`).join('');
-  const lead=(new Date(y,mo,1).getDay()+6)%7,days=new Date(y,mo+1,0).getDate();let ok=0,no=0;
+  const lead=(new Date(y,mo,1).getDay()+6)%7,days=new Date(y,mo+1,0).getDate();let ok=0,no=0,pf=0;
   for(let i=0;i<lead;i++)h+='<div></div>';
   for(let d=1;d<=days;d++){
-    const k=K(new Date(y,mo,d)),fu=k>t0,lv=fu||!inP(k)?0:level(k);let cls='',mk='',lab='';
-    if(lv===2){cls='ok';mk=CHK;lab='completed';ok++}
-    else if(!fu&&k<t0&&sk&&k>=sk){cls='no';mk=XX;lab='not completed';no++}
+    const k=K(new Date(y,mo,d)),fu=k>t0,cn=!fu&&inP(k)&&counted(k),lv=cn?level(k):0;let cls='',mk='',lab='';
+    if(lv===3){cls='pf';mk=STAR;lab='perfect';ok++;pf++}
+    else if(lv===2){cls='ok';mk=CHK;lab='passed';ok++}
+    else if(!fu&&k<t0&&sk&&k>=sk){cls='no';mk=XX;lab='failed';no++}
     h+=`<button class="d ${cls}${k===t0?' td':''}" data-a="go" data-k="${k}" ${fu?'disabled':''} aria-label="${fmt(D(k))} ${lab}"><span>${d}</span>${mk}</button>`;
   }
   $('#cg').innerHTML=h;
   $('#srC').innerHTML=srate();
-  $('#csum').innerHTML=`<b>${ok}</b> completed · <b>${no}</b> not completed`+(ok+no?` · ${Math.round(ok/(ok+no)*100)}%`:'');
-  const last30=Array.from({length:30},(_,i)=>K(add(today(),-i))).map(k=>inP(k)?level(k):0);
-  $('#hs').innerHTML=`<div><b>${streak()}</b><span>Current streak</span></div><div><b>${best()}</b><span>Best streak</span></div><div><b>${last30.filter(x=>x===2).length}</b><span>Days hit, last 30</span></div>`;
+  $('#csum').innerHTML=`<b>${ok}</b> passed (${pf} perfect) · <b>${no}</b> failed`+(ok+no?` · ${Math.round(ok/(ok+no)*100)}%`:'');
+  const sk0=startKey();let pfAll=0;if(sk0)for(let d=D(sk0);K(d)<=K(today());d=add(d,1)){const k=K(d);if(inP(k)&&counted(k)&&level(k)===3)pfAll++}
+  $('#hs').innerHTML=`<div><b>${streak()}</b><span>Current streak</span></div><div><b>${best()}</b><span>Best streak</span></div><div><b>${pfAll}</b><span>Perfect days</span></div>`;
   const ds=Array.from({length:7},(_,i)=>K(add(today(),-i))).filter(k=>logged(S.log[k]));
   $('#avg').innerHTML=ds.length?CATS.map(c=>{let a=0,tg=0;ds.forEach(k=>{a+=g(S.log[k],c.k);tg+=tFor(k)[c.k]});const av=a/ds.length,tt=tg/ds.length,pc=tt?Math.min(100,av/tt*100):av?100:0;
     return `<div class="bar" style="--c:var(${c.c})"><span>${c.n}</span><div class="tr"><i style="width:${pc}%"></i></div><span>${av.toFixed(1)} / ${tt.toFixed(0)}</span></div>`}).join('')+`<p class="small">Average per logged day (${ds.length} of 7). Carbs, fats and caloric drinks are limits; water is in 8 oz cups.</p>`:'<p class="none">Nothing logged in the last 7 days.</p>';
@@ -647,10 +716,10 @@ $('#rf').addEventListener('change',async()=>{
 function srate(){
   const sk=startKey();if(!sk)return '<b>—</b><div class="sp"><strong>No days logged yet</strong><span>Your success rate starts with your first logged day.</span></div>';
   const t0=K(today());let ok=0,no=0;
-  for(let d=D(sk);K(d)<=t0;d=add(d,1)){const k=K(d),lv=level(k);if(lv===2)ok++;else if(k<t0)no++}
+  let pf=0;for(let d=D(sk);K(d)<=t0;d=add(d,1)){const k=K(d);if(!inP(k))continue;if(counted(k)){ok++;if(level(k)===3)pf++}else if(k<t0)no++}
   const n=ok+no;if(!n)return '<b>—</b><div class="sp"><strong>Day 1 in progress</strong><span>Started '+fmtY(D(sk))+'</span></div>';
   const pc=Math.round(ok/n*100);
-  return `<b>${pc}%</b><div class="sp"><strong>${ok} succeeded · ${no} failed</strong><div class="sbar" aria-hidden="true"><i class="s" style="width:${ok/n*100}%"></i><i class="f" style="width:${no/n*100}%"></i></div><span>${n} day${n===1?'':'s'} since ${fmtY(D(sk))}</span></div>`;
+  return `<b>${pc}%</b><div class="sp"><strong>${ok} passed · ${no} failed · ${pf} perfect</strong><div class="sbar" aria-hidden="true"><i class="s" style="width:${ok/n*100}%"></i><i class="f" style="width:${no/n*100}%"></i></div><span>${n} day${n===1?'':'s'} since ${fmtY(D(sk))}</span></div>`;
 }
 function renderGuide(){
   const eyes=GUIDE.filter(x=>x.eye).map(x=>{const c=CATS.find(c=>c.k===x.k);return `<div class="eye" style="--c:var(${c.c})"><b>${c.n} = ${x.eye}</b><span>${x.eyeS}</span></div>`}).join('');
@@ -682,7 +751,7 @@ function doPg(){
   else if(pgAct==='erase'){S=fix(null);pgMsg='All data erased';cur=today()}
   pgAct=null;$('#pgc').hidden=true;save();fillForm();renderAll();
 }
-function renderAll(){renderPg();renderBand();renderToday();renderPlan();renderWt();renderCal();renderBk()}
+function renderAll(){stampToday();renderPg();renderBand();renderToday();renderPlan();renderWt();renderCal();renderBk()}
 function tab(t){
   document.querySelectorAll('[data-t]').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
   ['today','plan','wt','cal'].forEach(x=>$('#v-'+x).hidden=x!==t);
@@ -703,6 +772,10 @@ document.addEventListener('click',ev=>{
   const a=b.dataset.a;if(!a)return;
   if(a==='set')return setCount(b.dataset.k,+b.dataset.n);
   if(a==='winclose')return closeWin();
+  if(a==='complete')return completeDay();
+  if(a==='cdno')return closeCd();
+  if(a==='sugyes'){S.profile.diff=+b.dataset.to;S.sugDis=$('#sug').dataset.st;stampToday();save();fillForm();renderAll();return}
+  if(a==='sugno'){S.sugDis=$('#sug').dataset.st;save();renderToday();return}
   if(a==='guide')return openGuide(b.dataset.k,b);
   if(a==='gclose')return closeGuide();
   if(a==='lift')return toggleLift();
@@ -728,7 +801,7 @@ function syncWeight(){
   const E=S.wt.entries;if(E.length){S.profile.lb=E[E.length-1].lb;$('#lb').value=S.profile.lb}
   S.sample=false;save();renderAll();
 }
-$('#pf').addEventListener('input',()=>{readForm();S.sample=false;save();renderPlan();renderBand();renderToday();renderWt()});
+$('#pf').addEventListener('input',()=>{readForm();stampToday();S.sample=false;save();renderPlan();renderBand();renderToday();renderWt()});
 $('#pf').addEventListener('submit',e=>e.preventDefault());
 $('#wf').addEventListener('submit',e=>{
   e.preventDefault();
